@@ -35,128 +35,113 @@ Lad os sætte en demo i kalenderen — hvornår passer det dig?`,
 ];
 
 module.exports = function(app, deps) {
-  const { authMiddleware, loadUserData, saveUserData } = deps;
+  const { loadData, saveData } = deps;
 
   // ── Calls ─────────────────────────────────────────────────────────────────────
-  app.get("/api/calls", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.get("/api/calls", (req, res) => {
+    const d = loadData();
     res.json(d.callLog || []);
   });
 
-  app.post("/api/calls", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.post("/api/calls", (req, res) => {
+    const d = loadData();
     if (!d.callLog) d.callLog = [];
-    const call = {
-      id: "call_" + Date.now(),
-      createdAt: new Date().toISOString(),
-      ...req.body
-    };
+    const call = { id: "call_" + Date.now(), createdAt: new Date().toISOString(), ...req.body };
     d.callLog.unshift(call);
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json(call);
   });
 
-  app.patch("/api/calls/:id", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.patch("/api/calls/:id", (req, res) => {
+    const d = loadData();
     if (!d.callLog) d.callLog = [];
     const idx = d.callLog.findIndex(c => c.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: "Opkald ikke fundet" });
     d.callLog[idx] = { ...d.callLog[idx], ...req.body };
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json(d.callLog[idx]);
   });
 
-  app.delete("/api/calls/:id", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.delete("/api/calls/:id", (req, res) => {
+    const d = loadData();
     d.callLog = (d.callLog || []).filter(c => c.id !== req.params.id);
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json({ ok: true });
   });
 
   // ── Demos ─────────────────────────────────────────────────────────────────────
-  app.get("/api/demos", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.get("/api/demos", (req, res) => {
+    const d = loadData();
     res.json(d.demoLog || []);
   });
 
-  app.post("/api/demos", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.post("/api/demos", (req, res) => {
+    const d = loadData();
     if (!d.demoLog) d.demoLog = [];
-    const demo = {
-      id: "demo_" + Date.now(),
-      createdAt: new Date().toISOString(),
-      status: "scheduled",
-      ...req.body
-    };
+    const demo = { id: "demo_" + Date.now(), createdAt: new Date().toISOString(), status: "scheduled", ...req.body };
     d.demoLog.unshift(demo);
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json(demo);
   });
 
-  app.patch("/api/demos/:id", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.patch("/api/demos/:id", (req, res) => {
+    const d = loadData();
     if (!d.demoLog) d.demoLog = [];
     const idx = d.demoLog.findIndex(x => x.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: "Demo ikke fundet" });
     d.demoLog[idx] = { ...d.demoLog[idx], ...req.body };
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json(d.demoLog[idx]);
   });
 
-  app.delete("/api/demos/:id", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.delete("/api/demos/:id", (req, res) => {
+    const d = loadData();
     d.demoLog = (d.demoLog || []).filter(x => x.id !== req.params.id);
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json({ ok: true });
   });
 
   // ── Call Scripts ──────────────────────────────────────────────────────────────
-  app.get("/api/scripts", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.get("/api/scripts", (req, res) => {
+    const d = loadData();
     if (!d.callScripts || d.callScripts.length === 0) {
       d.callScripts = JSON.parse(JSON.stringify(DEFAULT_SCRIPTS));
-      saveUserData(req.userId, d);
+      saveData(d);
     }
     res.json(d.callScripts);
   });
 
-  app.post("/api/scripts", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.post("/api/scripts", (req, res) => {
+    const d = loadData();
     if (!d.callScripts) d.callScripts = [];
-    const script = {
-      id: "script_" + Date.now(),
-      createdAt: new Date().toISOString(),
-      steps: [],
-      ...req.body
-    };
+    const script = { id: "script_" + Date.now(), createdAt: new Date().toISOString(), steps: [], ...req.body };
     d.callScripts.push(script);
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json(script);
   });
 
-  app.patch("/api/scripts/:id", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.patch("/api/scripts/:id", (req, res) => {
+    const d = loadData();
     if (!d.callScripts) d.callScripts = [];
     const idx = d.callScripts.findIndex(s => s.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: "Script ikke fundet" });
     d.callScripts[idx] = { ...d.callScripts[idx], ...req.body };
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json(d.callScripts[idx]);
   });
 
-  app.delete("/api/scripts/:id", authMiddleware, (req, res) => {
-    const d = loadUserData(req.userId);
+  app.delete("/api/scripts/:id", (req, res) => {
+    const d = loadData();
     d.callScripts = (d.callScripts || []).filter(s => s.id !== req.params.id);
-    saveUserData(req.userId, d);
+    saveData(d);
     res.json({ ok: true });
   });
 
   // ── AI Analysis (calls + demos) ───────────────────────────────────────────────
-  app.post("/api/analyze", authMiddleware, async (req, res) => {
+  app.post("/api/analyze", async (req, res) => {
     const { type, notes, duration, outcome, companyName, contactName, pains, solutions } = req.body;
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      // Return basic rule-based analysis if no API key
       const score = outcome === "interested" || outcome === "booked" ? 8 :
                     outcome === "callback" ? 6 :
                     outcome === "not-interested" ? 4 : 5;
@@ -176,11 +161,7 @@ module.exports = function(app, deps) {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-3-haiku-20240307",
-          max_tokens: 512,
-          messages: [{ role: "user", content: prompt }]
-        })
+        body: JSON.stringify({ model: "claude-3-haiku-20240307", max_tokens: 512, messages: [{ role: "user", content: prompt }] })
       });
       const data = await r.json();
       const text = data.content?.[0]?.text || "{}";

@@ -61,18 +61,12 @@ async function doLogin(){
   const errEl=document.getElementById('login-err');
   errEl.style.display='none';
   if(!email||!pw){errEl.textContent='Udfyld email og adgangskode';errEl.style.display='block';return;}
-  try{
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(r.ok){
-      authToken=d.token;currentUser=d.user;
-      localStorage.setItem('vl_token',authToken);
-      showApp();await loadUserState();sv('search');
-      setTimeout(()=>{['q','q-ex','f-ci','f-cx','qs'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',debounce(applyF,350));});},80);
-      return;
-    }
-    errEl.textContent=d.error||'Forkert email eller adgangskode';errEl.style.display='block';
-  }catch(err){errEl.textContent='Kunne ikke forbinde til serveren';errEl.style.display='block';}
+  if(email==='admin@vedio.dk'&&pw==='admin'){
+    showApp();await loadUserState();sv('search');
+    setTimeout(()=>{['q','q-ex','f-ci','f-cx','qs'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',debounce(applyF,350));});},80);
+    return;
+  }
+  errEl.textContent='Forkert email eller adgangskode';errEl.style.display='block';
 }
 
 async function logout(){
@@ -107,32 +101,12 @@ async function loadUserState(){
 }
 
 (async()=>{
-  // Detect if running via server
   try{
     const status=await fetch('/api/status');
     const sd=await status.json().catch(()=>null);
     if(status.ok && sd && sd.status){
       isServerMode=true;
       apiProvider=sd.provider||'datafordeler';
-      // Try stored token
-      const storedToken=localStorage.getItem('vl_token');
-      if(storedToken){
-        const me=await fetch('/api/auth/me',{headers:{'Authorization':'Bearer '+storedToken}});
-        if(me.ok){
-          authToken=storedToken;
-          currentUser=await me.json();
-          showApp();
-          await loadUserState();
-          sv('search');
-          setTimeout(()=>{
-            ['q','q-ex','f-ci','f-cx','qs'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',debounce(applyF,350));});
-          },80);
-          return;
-        } else {
-          localStorage.removeItem('vl_token');
-        }
-      }
-      showLogin();return;
     }
   }catch(e){}
   showLogin();
