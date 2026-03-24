@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Secrets and local config (brug .env.example som skabelon)
+.env
+.env.local
+.env.*.local
+
+# Brugere med adgangskoder i klartekst — ikke til offentligt repo
+users.json
+
+# Lokale lead-/app-data pr. bruger
+data_*.json
+
+# Logs og OS
+*.log
+npm-debug.log*
+.DS_Store

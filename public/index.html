@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<title>Vedio Leads</title>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="/login.png" alt="Vedio Leads" style="width:48px;height:48px;margin-bottom:6px">
+      <div class="login-logo-title">Vedio Leads</div>
+      <div class="login-logo-sub">Lead Management</div>
+    </div>
+
+    <input class="login-inp" id="login-email" type="email" placeholder="Email" autocomplete="email">
+    <input class="login-inp" id="login-pw" type="password" placeholder="Adgangskode" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Log ind</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sb">
+  <div class="sb-logo">
+    <img id="logo-img" src="/login.png" alt="Vedio">
+    <div>
+      <div class="sb-logo-text">Vedio Leads</div>
+      <div class="sb-logo-sub">Lead Management</div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <a class="on" id="nv-s" onclick="sv('search')">
+      <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="m11 11 3 3"/></svg>
+      Søg virksomheder
+    </a>
+    <a id="nv-l" onclick="sv('leads')">
+      <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12M2 8h8M2 12h6"/></svg>
+      Mine leads
+    </a>
+  </nav>
+
+  <div class="sb-filters" id="sb-filters" style="display:none"></div>
+
+  <div class="sb-lists-wrap" id="sb-lists" style="display:none">
+    <div class="sb-sec">Lister</div>
+    <div id="lc"></div>
+    <div class="sb-addlist" onclick="togNL()">＋ Ny liste</div>
+    <input id="nli" class="nlinput" placeholder="Navn + Enter" style="display:none" autocomplete="off">
+  </div>
+  <div class="sb-footer" id="sb-footer" style="display:none">
+    <button class="exp-btn" onclick="doExport()">⬇ Eksportér leads (CSV)</button>
+  </div>
+
+  <!-- USER PROFILE -->
+  <div class="user-profile" id="user-profile" style="display:none">
+    <div class="user-profile-inner" onclick="openProfileModal()" style="cursor:pointer" title="Rediger profil">
+      <div class="user-avatar" id="user-avatar"></div>
+      <div class="user-info">
+        <div class="user-name" id="user-name"></div>
+      </div>
+      <div class="user-logout" onclick="event.stopPropagation();logout()" data-tip="Log ud"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2h7v12H6M2 8h8M8 5l3 3-3 3"/></svg></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="toolbar">
+    <div class="sb-toggle" onclick="togSB()">☰</div>
+    <div class="sbox" id="sw">
+      <span class="sbox-ico">⌕</span>
+      <input id="qs" type="text" placeholder="Hurtigsøg navn, CVR, branche, by…" autocomplete="off">
+    </div>
+    <div class="filter-btn" id="filter-btn-wrap">
+      <button class="btn" onclick="togFilterPop()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 3h14M3 8h10M5.5 13h5"/></svg>
+        Filtre
+        <span class="filter-count" id="filter-count" style="display:none">0</span>
+      </button>
+      <div class="fp-overlay" id="fp-overlay" onclick="togFilterPop()"></div>
+      <div class="filter-popover" id="filter-popover">
+        <div class="fp-hd">
+          <span class="fp-title">Filtre</span>
+          <button class="fp-close" onclick="togFilterPop()">✕</button>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-title">Generelt</div>
+          <div class="fl">Inkluder søgeord</div>
+          <input class="fi" id="q" placeholder="CVR, navn, website…" autocomplete="off">
+          <div class="fl">Ekskluder søgeord</div>
+          <input class="fi" id="q-ex" placeholder="Holding, udlejning…" autocomplete="off">
+          <div class="fl">Reklamebeskyttelse</div>
+          <div class="rk-grp">
+            <button class="rk-btn on" id="rk-alle" onclick="setRk('alle')">Alle</button>
+            <button class="rk-btn" id="rk-skjul" onclick="setRk('skjul')">Skjul</button>
+            <button class="rk-btn" id="rk-kun" onclick="setRk('kun')">Kun</button>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-title">Virksomhedsoplysninger</div>
+          <div class="fl">Virksomhedsform</div>
+          <select class="fs" id="f-form" onchange="applyF()">
+            <option value="">Alle former</option>
+            <option value="ApS">ApS</option><option value="A/S">A/S</option>
+            <option value="I/S">I/S</option><option value="Enkeltmands">Enkeltmands</option>
+          </select>
+          <div class="fl">Ansatte</div>
+          <div class="frow"><input class="fi" id="fe1" type="number" placeholder="Fra" onchange="applyF()"><span>–</span><input class="fi" id="fe2" type="number" placeholder="Til" onchange="applyF()"></div>
+          <div class="fl">Egenkapital over (kr.)</div>
+          <input class="fi" id="f-eq" type="number" placeholder="0" onchange="applyF()">
+          <div class="fl">Resultat over (kr.)</div>
+          <input class="fi" id="f-res" type="number" placeholder="0" onchange="applyF()">
+          <div class="fl">Virksomhedens alder (mdr.)</div>
+          <div class="frow"><input class="fi" id="fam" type="number" placeholder="Min" onchange="applyF()"><span>–</span><input class="fi" id="faM" type="number" placeholder="Max" onchange="applyF()"></div>
+          <div class="fl">Branche</div>
+          <select class="fs" id="f-b" onchange="applyF()">
+            <option value="">Alle brancher</option>
+            <option value="41">Byggeri & anlæg</option>
+            <option value="43">Spec. byggeri</option>
+            <option value="46">Engroshandel</option>
+            <option value="47">Detailhandel</option>
+            <option value="56">Restaurant & café</option>
+            <option value="62">IT & software</option>
+            <option value="63">Data & hosting</option>
+            <option value="64">Finansiering</option>
+            <option value="68">Ejendomme</option>
+            <option value="69">Jura & revision</option>
+            <option value="70">Rådgivning</option>
+            <option value="71">Arkitekter</option>
+            <option value="73">Reklame & marketing</option>
+            <option value="81">Rengøring</option>
+            <option value="86">Sundhed</option>
+          </select>
+          <div class="fl">Stiftet (år)</div>
+          <div class="frow"><input class="fi" id="fy1" type="number" placeholder="2000" onchange="applyF()"><span>–</span><input class="fi" id="fy2" type="number" placeholder="2025" onchange="applyF()"></div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-title">Område</div>
+          <div class="fl">Inkluder by</div>
+          <input class="fi" id="f-ci" placeholder="Aalborg" autocomplete="off" onchange="applyF()">
+          <div class="fl">Ekskluder by</div>
+          <input class="fi" id="f-cx" placeholder="København" autocomplete="off" onchange="applyF()">
+          <div class="fl">Postnr. interval</div>
+          <div class="frow"><input class="fi" id="fzm" type="number" placeholder="5000" onchange="applyF()"><span>–</span><input class="fi" id="fzM" type="number" placeholder="5999" onchange="applyF()"></div>
+        </div>
+        <div class="fp-footer">
+          <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="resetF()">Nulstil alle filtre</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="addAll()">+ Tilføj alle</button>
+    </div>
+  </div>
+
+  <div class="stbar" id="stbar"></div>
+  <div class="selbar h" id="selbar"></div>
+
+  <!-- LEADS LIST BAR (moved from sidebar) -->
+  <div class="leads-list-bar" id="leads-list-bar" style="display:none">
+    <div class="llb-lists" id="llb-lists"></div>
+    <div class="llb-actions">
+      <button class="btn btn-sm" onclick="togNL('nli2','inline-block')">+ Ny liste</button>
+      <input id="nli2" class="llb-input" placeholder="Navn + Enter" style="display:none" autocomplete="off">
+      <button class="btn btn-sm" onclick="doExport()">⬇ Eksportér leads (CSV)</button>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+    <div class="tw">
+      <table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+      <div id="load-more-wrap" style="display:none;padding:12px;text-align:center">
+        <button class="btn btn-sm" onclick="loadMore()" id="load-more-btn">Indlæs flere resultater</button>
+        <span id="load-more-info" style="font-size:11px;color:var(--gray);margin-left:8px"></span>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- DETAIL PANEL (fixed, root-level so it works from any view) -->
+<div class="dp h" id="dp" style="position:fixed;right:0;top:0;bottom:0;z-index:200;background:#fff;box-shadow:-6px 0 32px rgba(0,0,0,.18);border-left:1px solid var(--border);display:flex;flex-direction:column"></div>
+
+<!-- PROFILE MODAL -->
+<div id="profile-modal" style="display:none;position:fixed;inset:0;z-index:320;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div class="profile-modal-card">
+    <div class="profile-modal-hd">
+      <span class="profile-modal-title">Min profil</span>
+      <span class="profile-modal-close" onclick="closeProfileModal()">×</span>
+    </div>
+    <div class="profile-modal-body">
+
+      <!-- Avatar -->
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar-ring" onclick="document.getElementById('profile-avatar-input').click()" title="Skift profilbillede">
+          <div class="profile-avatar-big" id="profile-avatar-big"></div>
+          <div class="profile-avatar-cam"><div class="profile-avatar-cam-ico"></div></div>
+        </div>
+        <div style="font-size:10.5px;color:var(--gray2)">Klik for at uploade billede</div>
+        <input id="profile-avatar-input" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">
+        <button id="profile-avatar-remove" class="btn btn-danger btn-sm" style="display:none;font-size:11px;padding:4px 10px" onclick="removeAvatar()">Fjern billede</button>
+      </div>
+
+      <div class="profile-msg" id="profile-msg"></div>
+
+      <!-- Name + Email -->
+      <div class="profile-field">
+        <label>Navn</label>
+        <input id="pf-name" type="text" placeholder="Dit fulde navn">
+      </div>
+      <div class="profile-field">
+        <label>Email</label>
+        <input id="pf-email" type="email" placeholder="din@email.dk">
+      </div>
+
+      <!-- Color -->
+      <div class="profile-field">
+        <label>Profilfarve</label>
+        <div class="profile-color-row" id="profile-color-row">
+          <!-- swatches rendered by JS -->
+        </div>
+      </div>
+
+      <hr class="profile-divider">
+
+      <!-- Password change -->
+      <div class="profile-pw-toggle" onclick="togglePwSection()">
+        <span id="pw-toggle-arrow">▶</span> Skift adgangskode
+      </div>
+      <div class="profile-pw-section" id="profile-pw-section" style="display:none">
+        <div class="profile-field">
+          <label>Nuværende adgangskode</label>
+          <input id="pf-pw-current" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div class="profile-field">
+          <label>Ny adgangskode</label>
+          <input id="pf-pw-new" type="password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div class="profile-field">
+          <label>Bekræft ny adgangskode</label>
+          <input id="pf-pw-confirm" type="password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="changePassword()">Skift adgangskode</button>
+      </div>
+
+    </div>
+    <div class="profile-modal-ft">
+      <button class="btn btn-sm" onclick="closeProfileModal()">Annuller</button>
+      <button class="btn btn-primary btn-sm" onclick="saveProfile()">Gem profil</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT LEAD MODAL -->
+<div id="edit-lead-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div class="edit-lead-card">
+    <div class="edit-lead-hd">
+      <span class="edit-lead-title" id="edit-lead-title">Rediger lead</span>
+      <span class="edit-lead-close" onclick="closeEditLead()">×</span>
+    </div>
+    <div class="edit-lead-body">
+      <div class="edit-section-lbl">Kontaktperson</div>
+      <div class="edit-field-row">
+        <div class="edit-field">
+          <label>Kontaktnavn</label>
+          <input id="ef-contactName" placeholder="Fuldt navn">
+        </div>
+        <div class="edit-field">
+          <label>Titel / stilling</label>
+          <input id="ef-contactTitle" placeholder="CEO, Marketing Manager…">
+        </div>
+      </div>
+      <div class="edit-field-row">
+        <div class="edit-field">
+          <label>Telefon</label>
+          <input id="ef-ph" placeholder="12 34 56 78">
+        </div>
+        <div class="edit-field">
+          <label>Email</label>
+          <input id="ef-em" type="email" placeholder="kontakt@firma.dk">
+        </div>
+      </div>
+      <div class="edit-field">
+        <label>Website</label>
+        <input id="ef-web" placeholder="www.firma.dk">
+      </div>
+      <div class="edit-section-lbl" style="margin-top:4px">Virksomhed</div>
+      <div class="edit-field">
+        <label>Firmanavn</label>
+        <input id="ef-name" placeholder="Firmanavn">
+      </div>
+      <div class="edit-field">
+        <label>Branche</label>
+        <input id="ef-ind" placeholder="Detailhandel, Teknologi…">
+      </div>
+      <div class="edit-field">
+        <label>Adresse</label>
+        <input id="ef-addr" placeholder="Vejnavn 1">
+      </div>
+      <div class="edit-field-row">
+        <div class="edit-field">
+          <label>Postnr.</label>
+          <input id="ef-zip" placeholder="1234">
+        </div>
+        <div class="edit-field">
+          <label>By</label>
+          <input id="ef-city" placeholder="København">
+        </div>
+      </div>
+      <div class="edit-field-row">
+        <div class="edit-field">
+          <label>Omsætning (kr.)</label>
+          <input id="ef-omsaetning" type="number" placeholder="0">
+        </div>
+        <div class="edit-field">
+          <label>Ansatte</label>
+          <input id="ef-emps" type="number" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="edit-lead-ft">
+      <button class="btn btn-sm" onclick="closeEditLead()">Annuller</button>
+      <button class="btn btn-primary btn-sm" onclick="saveEditLead()">Gem ændringer</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
